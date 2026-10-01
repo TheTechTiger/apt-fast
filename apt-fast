@@ -36,6 +36,26 @@ msg(){
   fi
 }
 
+# Detect Termux (Android): single-user environment where apt works without
+# root, everything lives under $PREFIX and temp files go to $TMPDIR.
+# Usage: is_termux && echo "running on Termux"
+is_termux(){
+  [ -n "${TERMUX_VERSION:-}" ] && return 0
+  case "${PREFIX:-}" in
+    *com.termux*) return 0 ;;
+  esac
+  [ -n "${PREFIX:-}" ] && [ "$(uname -o 2>/dev/null)" = "Android" ] && return 0
+  return 1
+}
+
+# Temp directory for the lock file and download list. Termux has no /tmp, so
+# prefer $TMPDIR, then $PREFIX/tmp when it exists, and fall back to /tmp.
+_APTFAST_TMPDIR="${TMPDIR:-}"
+if [ -z "$_APTFAST_TMPDIR" ] && [ -n "${PREFIX:-}" ] && [ -d "$PREFIX/tmp" ]; then
+  _APTFAST_TMPDIR="$PREFIX/tmp"
+fi
+: "${_APTFAST_TMPDIR:=/tmp}"
+
 # Search for known options and decide if root privileges are needed.
 root=$#
 option=
@@ -88,7 +108,8 @@ TMP_https_proxy="${https_proxy-${TMP_RANDOM}}"
 
 # Check for proper privileges.
 # Call explicitly with environment variables to get them into root conext.
-if [ "$root" -ne 0 ] && [ "$UID" != 0 ]; then
+# On Termux apt works without root (single-user), so never re-exec with sudo.
+if [ "$root" -ne 0 ] && [ "$UID" != 0 ] && ! is_termux; then
   exec sudo DEBUG="$DEBUG" \
             LCK_FILE="$TMP_LCK_FILE" \
             DOWNLOADBEFORE="$TMP_DOWNLOADBEFORE" \
@@ -112,11 +133,11 @@ if [ "$root" -ne 0 ] && [ "$UID" != 0 ]; then
 fi
 
 # Define lockfile.
-# Use /tmp as directory because everybody (not only root) has to have write
-# permissions.
+# Use $TMPDIR when set (Termux has no /tmp, it uses $PREFIX/tmp) because
+# everybody (not only root) has to have write permissions.
 # We need lock for non-root commands too, because we only have one download
 # list file.
-LCK_FILE="/tmp/apt-fast"
+LCK_FILE="$_APTFAST_TMPDIR/apt-fast"
 LCK_FD=99
 
 # Set default package manager, APT cache, temporary download dir,
@@ -142,7 +163,7 @@ if [ -d "$NETRCDIR" ]; then
     APTAUTHFILES+=("$NETRCDIR"/*)
 fi
 
-DLLIST="/tmp/apt-fast.list"
+DLLIST="$_APTFAST_TMPDIR/apt-fast.list"
 _MAXNUM=5
 _MAXCONPERSRV=10
 _SPLITCON=8
@@ -176,8 +197,11 @@ VERBOSE_OUTPUT=
 # Download command.
 _DOWNLOADER='aria2c --no-conf -c -j ${_MAXNUM} -x ${_MAXCONPERSRV} -s ${_SPLITCON} -i ${DLLIST} --min-split-size=${_MINSPLITSZ} --stream-piece-selector=${_PIECEALGO} --connect-timeout=600 --timeout=600 -m0 --header "Accept: */*"'
 
-# Load config file.
-for Prefix in /usr/local/etc /etc; do
+# Load config file. On Termux the config lives under $PREFIX/etc because
+# /usr/local/etc and /etc are not writable, so check there first.
+_confprefs="/usr/local/etc /etc"
+[ -n "${PREFIX:-}" ] && _confprefs="$PREFIX/etc $_confprefs"
+for Prefix in $_confprefs; do
     CONFFILE=${Prefix}/apt-fast.conf
     if [ -e "$CONFFILE" ]; then
         source "$CONFFILE"

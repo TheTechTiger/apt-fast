@@ -21,6 +21,7 @@ apt-fast is a shell script wrapper for apt-get and aptitude that can drastically
   - [Debian and derivates](#debian-and-derivates)
   - [Interaction-free installation](#interaction-free-installation)
   - [Quick install](#quick-install)
+  - [Termux (Android)](#termux-android)
   - [Manual](#manual)
   - [Autocompletion](#autocompletion)
     - [Bash](#bash)
@@ -106,6 +107,32 @@ You can quickly install `apt-fast` by running:
 ```bash
 /bin/bash -c "$(curl -sL https://git.io/vokNn)"
 ```
+
+### Termux (Android) ###
+This fork supports [Termux](https://termux.dev/) on Android. No root is required:
+Termux is single-user, so `apt-fast` never uses `sudo` there, installs under
+`$PREFIX` (`$PREFIX/bin/apt-fast` with config in `$PREFIX/etc/apt-fast.conf`),
+and keeps its lock/download-list files in `$TMPDIR` (Termux has no `/tmp`).
+
+Quick install on Termux (note: plain `bash`, there is no `/bin/bash` on Android):
+
+```bash
+bash -c "$(curl -sL https://raw.githubusercontent.com/TheTechTiger/apt-fast/master/quick-install.sh)"
+```
+
+To install from another fork/branch, override the download location:
+
+```bash
+APT_FAST_URL=https://raw.githubusercontent.com/<user>/apt-fast/<branch> bash quick-install.sh
+```
+
+Or install with `make` (from a checkout of this repo):
+
+```sh
+make install PREFIX="$PREFIX"
+```
+
+Then run `apt-fast` instead of `apt-get`, e.g. `apt-fast install <package>`.
 
 ### Manual ###
 A manual install can be performed as such:
