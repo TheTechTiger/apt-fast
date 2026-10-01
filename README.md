@@ -17,17 +17,8 @@ apt-fast is a shell script wrapper for apt-get and aptitude that can drastically
 ## Table of Contents
 
 - [Installation](#installation)
-  - [Ubuntu PPA](#ubuntu-ppa)
-  - [Debian and derivates](#debian-and-derivates)
-  - [Interaction-free installation](#interaction-free-installation)
   - [Quick install](#quick-install)
-  - [Termux (Android)](#termux-android)
   - [Manual](#manual)
-  - [Autocompletion](#autocompletion)
-    - [Bash](#bash)
-    - [Zsh](#zsh)
-    - [Fish](#fish)
-  - [Man page installation](#man-page-installation)
 - [Configuration](#configuration)
   - [Package manager](#package-manager)
   - [Confirmation dialog](#confirmation-dialog)
@@ -49,75 +40,17 @@ apt-fast is a shell script wrapper for apt-get and aptitude that can drastically
 
 Installation
 ------------
-
-```sh
-sudo add-apt-repository ppa:apt-fast/stable
-sudo apt-get update
-sudo apt-get -y install apt-fast
-```
-
-### Ubuntu PPA ###
-You can use the Ubuntu PPA to get a graphical configuration file setup and automatic updates, for details see:
-
-* [ppa:apt-fast/stable](https://code.launchpad.net/~apt-fast/+archive/stable)
-
-
-### Debian and derivates ###
-Some distros, such as PCLinuxOS, include apt-fast in their repositories. However, if not included like in Debian or Kali Linux, then the PPA can be manually added by creating a new file `/etc/apt/sources.list.d/apt-fast.sources`:
-
-```
-Types: deb
-URIs: https://ppa.launchpadcontent.net/apt-fast/stable/ubuntu/
-Suites: focal
-Components: main 
-Signed-By: /etc/apt/keyrings/apt-fast.gpg
-```
-
-To retrieve the signed keys and install apt-fast, execute the following commands as root:
-
-```bash
-mkdir -p /etc/apt/keyrings
-curl -fsSL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0xBC5934FD3DEBD4DAEA544F791E2824A7F22B44BD" | gpg --dearmor -o /etc/apt/keyrings/apt-fast.gpg
-apt-get update
-apt-get install apt-fast
-```
-
-Note that the PPA version ``jammy`` might need to be updated with the recent Ubuntu LTS codename to stay up-to-date.
-See the [release list](https://wiki.ubuntu.com/Releases) for possible LTS codenames to try.
-
-### Interaction-free installation ###
-To install apt-fast without interaction, execute the following commands as root after adding the package sources to the `sources.list` as instructed above:
-
-```bash
-DEBIAN_FRONTEND=noninteractive apt-get install -y apt-fast
-```
-
-To update specific configuration values, use the debconf command line interface as root, e.g.:
-
-```bash
-echo debconf apt-fast/maxdownloads string 16 | debconf-set-selections
-echo debconf apt-fast/dlflag boolean true | debconf-set-selections
-echo debconf apt-fast/aptmanager string apt-get | debconf-set-selections
-```
-
+This branch supports [Termux](https://termux.dev/) on Android only. No root
+is required: Termux is single-user, so `apt-fast` never uses `sudo` there,
+installs under `$PREFIX` (`$PREFIX/bin/apt-fast` with config in
+`$PREFIX/etc/apt-fast.conf`), and keeps its lock/download-list files in
+`$TMPDIR` (Termux has no `/tmp`).
 
 ### Quick install ###
-You can quickly install `apt-fast` by running:
+Run (note: plain `bash`, there is no `/bin/bash` on Android):
 
 ```bash
-/bin/bash -c "$(curl -sL https://git.io/vokNn)"
-```
-
-### Termux (Android) ###
-This fork supports [Termux](https://termux.dev/) on Android. No root is required:
-Termux is single-user, so `apt-fast` never uses `sudo` there, installs under
-`$PREFIX` (`$PREFIX/bin/apt-fast` with config in `$PREFIX/etc/apt-fast.conf`),
-and keeps its lock/download-list files in `$TMPDIR` (Termux has no `/tmp`).
-
-Quick install on Termux (note: plain `bash`, there is no `/bin/bash` on Android):
-
-```bash
-bash -c "$(curl -sL https://raw.githubusercontent.com/TheTechTiger/apt-fast/master/quick-install.sh)"
+bash -c "$(curl -sL https://raw.githubusercontent.com/TheTechTiger/apt-fast/termux-support/quick-install.sh)"
 ```
 
 To install from another fork/branch, override the download location:
@@ -126,74 +59,22 @@ To install from another fork/branch, override the download location:
 APT_FAST_URL=https://raw.githubusercontent.com/<user>/apt-fast/<branch> bash quick-install.sh
 ```
 
-Or install with `make` (from a checkout of this repo):
+### Manual ###
+From a checkout of this repo:
 
 ```sh
 make install PREFIX="$PREFIX"
 ```
 
+You need [aria2c](http://aria2.sourceforge.net/) installed (both the quick
+installer and `make install` take care of this via `apt-get install aria2`).
+
 Then run `apt-fast` instead of `apt-get`, e.g. `apt-fast install <package>`.
 
-### Manual ###
-A manual install can be performed as such:
-
-```sh
-cp apt-fast /usr/local/sbin/
-chmod +x /usr/local/sbin/apt-fast
-cp apt-fast.conf /etc
-```
-
-You need to have [aria2c](http://aria2.sourceforge.net/) installed:
-
-```sh
-apt-get install aria2
-```
-
-Then run `apt-fast` instead of `apt-get` or `aptitude`.
-
-
-### Autocompletion ###
-The completions for the respective shells use the existing apt-get completion. It is required that the apt-get completion be installed. In the case of Bash, the package `bash-completion` is required. For Zsh and Fish, the required completions are included by default (in their `*-common` packages).
-
-#### Bash ####
-
-```sh
-apt-get install bash-completion
-cp completions/bash/apt-fast /etc/bash_completion.d/
-chown root:root /etc/bash_completion.d/apt-fast
-. /etc/bash_completion
-```
-
-#### Zsh ####
-
-```sh
-cp completions/zsh/_apt-fast /usr/share/zsh/functions/Completion/Debian/
-chown root:root /usr/share/zsh/functions/Completion/Debian/_apt-fast
-source /usr/share/zsh/functions/Completion/Debian/_apt-fast
-```
-
-#### Fish ####
-
-```fish
-cp completions/fish/apt-fast.fish /etc/fish/conf.d/completions/
-chown root:root /etc/fish/conf.d/completions/apt-fast.fish
-source /etc/fish/conf.d/completions/apt-fast.fish
-```
-
-### Man page installation ###
-
-```sh
-mkdir -p /usr/local/share/man/man8/
-cp ./man/apt-fast.8 /usr/local/share/man/man8
-gzip -f9 /usr/local/share/man/man8/apt-fast.8
-mkdir -p /usr/local/share/man/man5/
-cp ./man/apt-fast.conf.5 /usr/local/share/man/man5
-gzip -f9 /usr/local/share/man/man5/apt-fast.conf.5
-```
 
 Configuration
 -------------
-The apt-fast configuration file is located at: `/etc/apt-fast.conf`
+The apt-fast configuration file is located at: `$PREFIX/etc/apt-fast.conf`
 
 
 ### Package manager ###

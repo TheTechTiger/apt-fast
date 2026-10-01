@@ -5,7 +5,7 @@ set -e
 #
 # Environment overrides:
 #   APT_FAST_URL   base URL to download the apt-fast files from.
-#                  Default: https://raw.githubusercontent.com/TheTechTiger/apt-fast/master
+#                  Default: https://raw.githubusercontent.com/TheTechTiger/apt-fast/termux-support
 #   PREFIX         install prefix. Termux sets this automatically
 #                  (usually /data/data/com.termux/files/usr).
 
@@ -16,7 +16,7 @@ run_cmd() {
   "$@"
 }
 
-apt_fast_url="${APT_FAST_URL:-https://raw.githubusercontent.com/TheTechTiger/apt-fast/master}"
+apt_fast_url="${APT_FAST_URL:-https://raw.githubusercontent.com/TheTechTiger/apt-fast/termux-support}"
 
 is_termux() {
   # Explicit Termux marker.

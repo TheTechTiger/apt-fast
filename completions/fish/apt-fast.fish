@@ -1,5 +1,7 @@
 set completion_cmd apt-get
-if [ -f /etc/apt-fast.conf ]
+if [ -n "$PREFIX" ]; and test -f "$PREFIX/etc/apt-fast.conf"
+    set completion_cmd (bash -c 'source "$PREFIX/etc/apt-fast.conf" && echo "$_APTMGR"')
+else if [ -f /etc/apt-fast.conf ]
     set completion_cmd (bash -c 'source /etc/apt-fast.conf && echo "$_APTMGR"')
 end
 set completion_cmd (echo "$completion_cmd" | string split ' ' | head -n 1)
